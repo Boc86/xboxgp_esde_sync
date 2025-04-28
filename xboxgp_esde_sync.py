@@ -1,18 +1,15 @@
+#!/usr/bin/env python3
 import json
 import os
 import re
 import requests
-from PIL import Image
-from io import BytesIO
 import logging
 import asyncio
 import aiohttp
 from aiofiles import open as aio_open
 from datetime import datetime
-import threading
 import shutil
 import webbrowser
-from typing import Optional, Dict, Any
 import sys
 
 # Force X11 usage instead of Wayland

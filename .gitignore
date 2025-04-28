@@ -1,0 +1,9 @@
+.venv
+__pycach__
+.flatpak
+.flatpak-builder
+.vscode
+python-deps-src
+io.github.xboxgp_esde_sync.desktop
+io.github.xboxgp_esde_sync.yaml
+xboxgames_debug.log
