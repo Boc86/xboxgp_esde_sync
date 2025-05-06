@@ -4,7 +4,7 @@
 
 ## Overview
 
-**Xbox Game Pass Sync** is a Python PyQt5 application that automates the integration of Xbox Cloud Gaming ([Greenlight] (https://github.com/unknownskl/greenlight)) with [EmulationStation-DE (ES-DE)](https://es-de.org/). It fetches the latest Xbox Game Pass cloud games, downloads artwork and videos, generates launch scripts, and creates ES-DE-compatible metadata for seamless library management. A full Xbox Game Pass Ultimate subscription is required to stream Xbox Game Pass games.
+**Xbox Game Pass Sync** is a Python PyQt5 application that automates the integration of Xbox Cloud Gaming [Greenlight] (https://github.com/unknownskl/greenlight) client with [EmulationStation-DE (ES-DE)](https://es-de.org/). It fetches the latest Xbox Game Pass cloud games, downloads artwork and videos, generates launch scripts, and creates ES-DE-compatible metadata for seamless library management. A full Xbox Game Pass Ultimate subscription is required to stream Xbox Game Pass games.
 
 ---
 
