@@ -1,9 +1,7 @@
-
 #!/bin/bash
 
 APP_NAME="Xbox Sync"
-# Robust: Use install path without spaces to avoid Exec/desktop file parsing issues
-INSTALL_DIR="$HOME/XboxSync"
+INSTALL_DIR="$HOME/Xbox Sync"
 REPO_URL="https://github.com/Boc86/xboxgp_esde_sync"
 REPO_RAW="https://raw.githubusercontent.com/Boc86/xboxgp_esde_sync/main"
 PYTHON_SCRIPT="xboxgp_esde_sync.py"
@@ -17,7 +15,7 @@ create_desktop_file() {
     cat > "$DESKTOP_FILE" <<EOF
 [Desktop Entry]
 Name=$APP_NAME
-Exec="$VENV_DIR/bin/python" "$INSTALL_DIR/$PYTHON_SCRIPT"
+Exec=$VENV_DIR/bin/python $INSTALL_DIR/$PYTHON_SCRIPT
 Icon=$INSTALL_DIR/$ICON_FILE
 Type=Application
 Categories=Game;
@@ -47,7 +45,7 @@ install_app() {
     echo "Creating desktop shortcut..."
     create_desktop_file
 
-    echo "$APP_NAME installed successfully in $INSTALL_DIR."
+    echo "$APP_NAME installed successfully."
 }
 
 update_app() {
@@ -103,3 +101,4 @@ case "$CHOICE" in
         exit 1
         ;;
 esac
+
