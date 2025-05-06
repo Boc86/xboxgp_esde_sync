@@ -234,7 +234,52 @@ def download_file_to_subfolder(parent_folder, subfolders, filename, url):
         return False, str(e)
 
 async def main(base_dir, gamelist_dir, rom_dir, download_videos=False, progress_callback=None):
-    pass
+    try:
+        if progress_callback:
+            progress_callback(5)
+        if not is_cache_valid():
+            if progress_callback:
+                progress_callback(10)
+            ids_string = fetch_ids()
+            if progress_callback:
+                progress_callback(20)
+            save_additional_data_to_json(ids_string)
+        else:
+            logging.info("Cache files are valid. No need to download catalog data.")
+        if progress_callback:
+            progress_callback(40)
+        assets_dir = ensure_greenlight_subdir(base_dir)
+        games_dir = ensure_greenlight_subdir(rom_dir)
+        gamelist_folder = ensure_greenlight_subdir(gamelist_dir)
+        with open(CACHE_FILE, "r", encoding="utf-8") as f:
+            metadata_list = json.load(f)
+        metadata_dict = {}
+        for entry in metadata_list:
+            title = entry.get("ProductTitle", "")
+            sanitized_title = re.sub(r"[^a-zA-Z0-9]", "", title).upper()
+            metadata_dict[sanitized_title] = entry
+        valid_titles = set()
+        files_created = {"sh": 0, "logo": 0, "poster": 0, "fanart": 0}
+        marquee_dir = os.path.join(assets_dir, "marquee")
+        cover_dir = os.path.join(assets_dir, "cover")
+        fanart_dir = os.path.join(assets_dir, "fanart")
+        async with aiohttp.ClientSession() as session:
+            coros = []
+            for entry in metadata_list:
+                coros.append(process_entry(entry, session, valid_titles, files_created, games_dir, marquee_dir, cover_dir, fanart_dir))
+            total = len(coros)
+            chunk = max(1, total // 20) if total else 1
+            for i in range(0, total, chunk):
+                await asyncio.gather(*coros[i:i + chunk])
+                if progress_callback:
+                    progress_callback(40 + int(50 * i / total))
+        gamelist_path = os.path.join(gamelist_folder, "gamelist.xml")
+        await generate_gamelist(games_dir, gamelist_path, metadata_dict)
+        if progress_callback:
+            progress_callback(100)
+    except Exception as e:
+        logging.error(f"Exception in main(): {e}")
+        raise
 
 def load_settings():
     if os.path.exists(SETTINGS_FILE):
@@ -575,139 +620,29 @@ class GreenlightSyncApp(QMainWindow):
             "Confirm Clean",
             "Are you sure you want to delete ALL synced media, videos, scripts, and gamelists for Greenlight? (This cannot be undone.)",
             QMessageBox.Yes | QMessageBox.No
-            )
-    def integrate_greenlight(self):
-        try:
-            esde_folder = QFileDialog.getExistingDirectory(
-                self,
-                "Select ES-DE custom_systems Folder",
-                os.path.expanduser('~'),
-                QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks
-            )
-            if not esde_folder:
-                self.show_error("Error", "No folder selected.")
-                return
-            custom_systems_path = os.path.join(esde_folder, "es_systems.xml")
-            if not os.path.exists(custom_systems_path):
-                self.show_error("Error", "es_systems.xml not found in the selected folder.")
-                return
-            import xml.etree.ElementTree as ET
-            from xml.dom import minidom
-            try:
-                tree = ET.parse(custom_systems_path)
-                root = tree.getroot()
-            except ET.ParseError as pe:
-                self.show_error("Error", f"Error parsing es_systems.xml: {pe}")
-                return
-            if root.tag.lower() != "systemlist":
-                systemlist = root.find("systemList")
-                if systemlist is None:
-                    systemlist = ET.Element("systemList")
-                    systemlist.extend(list(root))
-                    root = systemlist
-                else:
-                    root = systemlist
-            else:
-                systemlist = root
-            exists = any(
-                system.find('name') is not None and system.find('name').text.strip().lower() == "greenlight"
-                for system in systemlist.findall('system')
-            )
-            if exists:
-                self.show_info("Info", "Greenlight is already integrated into ES-DE.")
-                return
-            games_dir = self.sh_folder_entry.text().strip()
-            if not games_dir:
-                self.show_error("Error", "Please set the Games Directory in Step 2.")
-                return
-            system_elem = ET.Element("system")
-            ET.SubElement(system_elem, "name").text = "greenlight"
-            ET.SubElement(system_elem, "fullname").text = "Xbox Game Pass"
-            ET.SubElement(system_elem, "path").text = f'bash "{games_dir}"'
-            ET.SubElement(system_elem, "extension").text = ".sh"
-            command_elem = ET.SubElement(system_elem, "command")
-            command_elem.set("label", "Greenlight")
-            command_elem.text = "bash %ROM%"
-            ET.SubElement(system_elem, "platform").text = "xbox"
-            ET.SubElement(system_elem, "theme").text = "greenlight"
-            systemlist.append(system_elem)
-            xmlstr = ET.tostring(systemlist, encoding='utf-8')
-            reparsed = minidom.parseString(xmlstr)
-            pretty_xml = reparsed.toprettyxml(indent="    ")
-            with open(custom_systems_path, "w", encoding="utf-8") as file:
-                file.write(pretty_xml)
-            self.show_info("Success", "Greenlight has been successfully integrated into ES-DE.")
-        except Exception as e:
-            self.show_error("Error", f"An error occurred: {e}")
-            logging.error(f"Error in integrate_greenlight: {e}")
-    def show_error(self, title, message):
-        QMessageBox.critical(self, title, message)
-    def show_info(self, title, message):
-        QMessageBox.information(self, title, message)
-    def start_sync(self):
-        base_dir = self.folder_entry.text().strip()
-        sh_dir = self.sh_folder_entry.text().strip()
-        gamelist_dir = self.gamelist_folder_entry.text().strip()
-        if not base_dir or not sh_dir or not gamelist_dir:
-            self.show_error("Error", "Please select folders for Assets, Games, and Gamelist.")
-            return
-        base_dir = ensure_greenlight_subdir(base_dir)
-        sh_dir = ensure_greenlight_subdir(sh_dir)
-        gamelist_dir = ensure_greenlight_subdir(gamelist_dir)
-        self.settings["base_dir"] = base_dir
-        self.settings["sh_dir"] = sh_dir
-        self.settings["gamelist_dir"] = gamelist_dir
-        save_settings(self.settings)
-        self.progress.setValue(0)
-        self.status_label.setText("Status: Sync in progress...")
-        self.status_label.setStyleSheet("color: #e0e0e0; font-size: 10pt;")
-        self.start_button.setEnabled(False)
-        self.worker = SyncWorker(base_dir, sh_dir, gamelist_dir)
-        self.worker.progress.connect(self.progress.setValue)
-        self.worker.finished.connect(self.sync_complete)
-        self.worker.error.connect(self.sync_error)
-        self.worker.start()
-    def sync_complete(self):
-        self.status_label.setText("Status: Sync complete!")
-        self.status_label.setStyleSheet("color: #4CAF50; font-size: 10pt;")
-        self.progress.setValue(100)
-        self.start_button.setEnabled(True)
-    def sync_error(self, message):
-        self.status_label.setText(f"Sync error: {message}")
-        self.status_label.setStyleSheet("color: #ff3333; font-size: 10pt;")
-        self.progress.setValue(0)
-        self.start_button.setEnabled(True)
-    def clean_all_media(self):
-        base_dir = self.folder_entry.text().strip()
-        sh_dir = self.sh_folder_entry.text().strip()
-        gamelist_dir = self.gamelist_folder_entry.text().strip()
-        base_dir = ensure_greenlight_subdir(base_dir)
-        sh_dir = ensure_greenlight_subdir(sh_dir)
-        gamelist_dir = ensure_greenlight_subdir(gamelist_dir)
-        reply = QMessageBox.question(
-            self,
-            "Confirm Clean",
-            "Are you sure you want to delete ALL synced media, videos, scripts, and gamelists for Greenlight? (This cannot be undone.)",
-            QMessageBox.Yes | QMessageBox.No
         )
         if reply == QMessageBox.Yes:
-            for path in [base_dir, sh_dir, gamelist_dir]:
-                if path and os.path.exists(path):
-                    try:
-                        for root, dirs, files in os.walk(path):
-                            for file in files:
-                                os.remove(os.path.join(root, file))
-                    except Exception as e:
-                        QMessageBox.warning(self, "Clean Error", f"Error cleaning {path}: {e}")
-            self.status_label.setText("Status: All media cleaned. Please sync again.")
-            self.progress.setValue(0)
-            self.start_button.setEnabled(True)
+            paths_to_clean = [
+                os.path.join(base_dir, "marquee"),
+                os.path.join(base_dir, "cover"),
+                os.path.join(base_dir, "fanart"),
+                sh_dir,
+                gamelist_dir,
+                CACHE_FILE,
+                CACHE_TIMESTAMP_FILE
+            ]
+            for p in paths_to_clean:
+                if os.path.isdir(p):
+                    shutil.rmtree(p, ignore_errors=True)
+                elif os.path.isfile(p):
+                    os.remove(p)
+            self.show_info("Clean Complete", "All Greenlight media and data have been deleted.")
 
-def main_gui():
+def main_app():
     app = QApplication(sys.argv)
-    mainWin = GreenlightSyncApp()
-    mainWin.show()
+    window = GreenlightSyncApp()
+    window.show()
     sys.exit(app.exec_())
 
 if __name__ == "__main__":
-    main_gui()
+    main_app()
