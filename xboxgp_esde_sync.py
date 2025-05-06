@@ -219,127 +219,22 @@ def ensure_greenlight_subdir(path):
     os.makedirs(path, exist_ok=True)
     return path
 
-async def main(base_dir, gamelist_dir, rom_dir, download_videos=False, progress_callback=None):
-    logging.info("Starting the script...")
-    files_created = {"sh": 0, "logo": 0, "poster": 0, "fanart": 0}
-    files_removed = {"sh": 0, "logo": 0, "poster": 0, "fanart": 0}
+def download_file_to_subfolder(parent_folder, subfolders, filename, url):
     try:
-        if not base_dir or not rom_dir or not gamelist_dir:
-            raise ValueError("One or more required folder paths are missing. Please set them via the GUI.")
-        base_dir = ensure_greenlight_subdir(base_dir)
-        rom_dir = ensure_greenlight_subdir(rom_dir)
-        gamelist_dir = ensure_greenlight_subdir(gamelist_dir)
-        output_dir = rom_dir
-        marquee_dir = os.path.join(base_dir, "marquees")
-        cover_dir = os.path.join(base_dir, "covers")
-        fanart_dir = os.path.join(base_dir, "fanart")
-        for directory in [output_dir, marquee_dir, cover_dir, fanart_dir]:
-            os.makedirs(directory, exist_ok=True)
-        logging.debug("Fetching game IDs and additional data (with cache)...")
-        if progress_callback:
-            progress_callback(0)
-        if not is_cache_valid():
-            id_strings = fetch_ids()
-            save_additional_data_to_json(id_strings)
-            logging.debug("Fetched and cached new additional data.")
-        else:
-            logging.debug("Using cached additional data (less than 24 hours old).")
-        if progress_callback:
-            progress_callback(5)
-        logging.debug("Checking ffmpeg installation...")
-        check_ffmpeg()
-        logging.debug("Loading JSON data...")
-        json_file_path = os.path.join(os.getcwd(), CACHE_FILE)
-        async with aio_open(json_file_path, "r", encoding="utf-8") as json_file:
-            data = json.loads(await json_file.read())
-        total = len(data)
-        logging.info(f"Loaded {total} entries from JSON data.")
-        valid_titles = set()
-        logging.debug("Processing entries asynchronously...")
-        async with aiohttp.ClientSession() as session:
-            tasks = []
-            for idx, entry in enumerate(data):
-                tasks.append(process_entry(entry, session, valid_titles, files_created, output_dir, marquee_dir, cover_dir, fanart_dir))
-                if progress_callback and total > 0:
-                    progress_callback(5 + 40 * (idx + 1) / total)
-            await asyncio.gather(*tasks)
-        logging.debug("Generating gamelist.xml...")
-        metadata_dict = {}
-        for entry in data:
-            product_title = entry.get("ProductTitle", "Unknown")
-            sanitized_title = re.sub(r"[^a-zA-Z0-9]", "", product_title).upper()
-            metadata_dict[sanitized_title] = entry
-        os.makedirs(gamelist_dir, exist_ok=True)
-        gamelist_path = os.path.join(gamelist_dir, "gamelist.xml")
-        if progress_callback:
-            progress_callback(50)
-        await generate_gamelist(output_dir, gamelist_path, metadata_dict)
-        if progress_callback:
-            progress_callback(60)
-        logging.debug("Starting threaded video downloads after all async I/O tasks.")
-        video_dir = os.path.join(base_dir, "videos")
-        os.makedirs(video_dir, exist_ok=True)
-        video_jobs = 0
-        futures = []
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-            for entry in data:
-                product_title = entry.get("ProductTitle", "Unknown")
-                sanitized_title = re.sub(r"[^a-zA-Z0-9]", "", product_title).upper()
-                dash_url = entry.get("DASH")
-                if dash_url:
-                    output_path = os.path.join(video_dir, f"{sanitized_title}.mp4")
-                    if not os.path.exists(output_path):
-                        futures.append(executor.submit(download_video, dash_url, output_path))
-            for future in concurrent.futures.as_completed(futures):
-                if future.result():
-                    video_jobs += 1
-                else:
-                    logging.error("A video download failed.")
-        logging.info(f"Threaded video download step complete. {video_jobs} videos processed.")
-        if progress_callback:
-            progress_callback(90)
-        logging.debug("Removing invalid files...")
-        for file_name in os.listdir(output_dir):
-            if file_name.endswith(".sh"):
-                sanitized_name = file_name[:-3]
-                if sanitized_name not in valid_titles:
-                    os.remove(os.path.join(output_dir, file_name))
-                    files_removed["sh"] += 1
-        for file_name in os.listdir(marquee_dir):
-            if file_name.endswith(".png"):
-                sanitized_name = file_name[:-4]
-                if sanitized_name not in valid_titles:
-                    os.remove(os.path.join(marquee_dir, file_name))
-                    files_removed["logo"] += 1
-        for file_name in os.listdir(cover_dir):
-            if file_name.endswith(".png"):
-                sanitized_name = file_name[:-4]
-                if sanitized_name not in valid_titles:
-                    os.remove(os.path.join(cover_dir, file_name))
-                    files_removed["poster"] += 1
-        for file_name in os.listdir(fanart_dir):
-            if file_name.endswith(".png"):
-                sanitized_name = file_name[:-4]
-                if sanitized_name not in valid_titles:
-                    os.remove(os.path.join(fanart_dir, file_name))
-                    files_removed["fanart"] += 1
-        if progress_callback:
-            progress_callback(100)
-        logging.info("Script completed successfully.")
+        dest_dir = os.path.join(parent_folder, *subfolders)
+        os.makedirs(dest_dir, exist_ok=True)
+        dest_path = os.path.join(dest_dir, filename)
+        resp = requests.get(url, timeout=15)
+        resp.raise_for_status()
+        with open(dest_path, 'wb') as f:
+            f.write(resp.content)
+        return True, dest_path
     except Exception as e:
-        logging.error(f"An error occurred: {e}")
-    finally:
-        try:
-            current = asyncio.current_task()
-            pending = [task for task in asyncio.all_tasks() if not task.done() and task is not current]
-            for task in pending:
-                task.cancel()
-            if pending:
-                await asyncio.wait(pending, timeout=5)
-        except Exception as e:
-            logging.error(f"Error during cleanup: {e}")
-        if progress_callback:
-            progress_callback(100)
+        logging.error(f"Failed to download {url} to {dest_path}: {e}")
+        return False, str(e)
+
+async def main(base_dir, gamelist_dir, rom_dir, download_videos=False, progress_callback=None):
+    pass
 
 def load_settings():
     if os.path.exists(SETTINGS_FILE):
@@ -375,6 +270,44 @@ class SyncWorker(QThread):
             self.error.emit(str(e))
 
 class GreenlightSyncApp(QMainWindow):
+    XBOX_GREEN = "#107C10"
+    BUTTON_STYLE = f"""
+        QPushButton {{
+            background-color: #222;
+            color: {XBOX_GREEN};
+            font-weight: bold;
+            border-radius: 6px;
+            border: 1px solid #484848;
+            padding: 7px 16px;
+        }}
+        QPushButton:pressed {{
+            background-color: #107C1099;
+            color: white;
+        }}
+    """
+    TITLE_STYLE = f"""
+        QGroupBox::title {{
+            color: {XBOX_GREEN};
+            subcontrol-origin: margin;
+            left: 20px;
+            font-weight: bold;
+            font-size: 15pt;
+        }}
+    """
+    CLEAN_BUTTON_STYLE = f"""
+        QPushButton {{
+            background-color: #222;
+            color: #ff2222;
+            font-weight: bold;
+            border-radius: 6px;
+            border: 1px solid #484848;
+            padding: 7px 16px;
+        }}
+        QPushButton:pressed {{
+            background-color: #107C1099;
+            color: white;
+        }}
+    """
     def __init__(self):
         super().__init__()
         self.settings = load_settings()
@@ -388,62 +321,86 @@ class GreenlightSyncApp(QMainWindow):
             entry_widget.setText(folder)
     def init_ui(self):
         self.setWindowTitle('Xbox Game Pass Sync')
-        self.setMinimumSize(900, 1000)
-        main_widget = QWidget(self)
-        main_layout = QVBoxLayout()
-        main_layout.setSpacing(24)
-        title = QLabel("Xbox Game Pass & Greenlight Sync Utility")
-        title.setFont(QFont("Arial", 20, QFont.Bold))
-        title.setAlignment(Qt.AlignHCenter)
-        main_layout.addWidget(title)
-        desc = QLabel(
-            "Sync Xbox Game Pass games for Greenlight/ES-DE. Configure folders, generate scripts, media, and synchronize your collection."
+        self.setMinimumSize(900, 600)
+        self.setWindowIcon(QIcon(os.path.join(os.path.dirname(os.path.abspath(__file__)), "icon.png")))
+        central_widget = QWidget()
+        main_layout = QVBoxLayout(central_widget)
+        main_layout.setSpacing(15)
+        main_layout.setContentsMargins(20, 20, 20, 20)
+        header_group = QGroupBox("Step 1: Install Greenlight")
+        header_group.setStyleSheet(self.TITLE_STYLE)
+        header_group.setMinimumWidth(500)
+        header_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        header_layout = QVBoxLayout(header_group)
+        info_label = QLabel(
+            "This tool syncs Xbox Game Pass games with EmulationStation-DE.\n"
+            "You must have Greenlight installed to use this tool."
         )
-        desc.setWordWrap(True)
-        desc.setAlignment(Qt.AlignHCenter)
-        desc.setStyleSheet("font-size: 13pt; color: #555;")
-        main_layout.addWidget(desc)
-        dir_section = self.create_directory_section_widget()
-        main_layout.addWidget(dir_section)
+        info_label.setWordWrap(True)
+        header_layout.addWidget(info_label)
+        open_link_button = QPushButton("Open Greenlight Installation Page")
+        open_link_button.setStyleSheet(self.BUTTON_STYLE)
+        header_layout.addWidget(open_link_button)
+        open_link_button.clicked.connect(self.open_greenlight_link)
+        main_layout.addWidget(header_group)
+        directory_section = self.create_directory_section_widget()
+        main_layout.addWidget(directory_section)
+        controls_group = QGroupBox("Step 3: Integration and Sync")
+        controls_group.setStyleSheet(self.TITLE_STYLE)
+        controls_group.setMinimumWidth(500)
+        controls_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        controls_layout = QVBoxLayout(controls_group)
+        integrate_layout = QHBoxLayout()
+        integrate_button = QPushButton("Integrate Greenlight with ES-DE")
+        integrate_button.setStyleSheet(self.BUTTON_STYLE)
+        integrate_button.clicked.connect(self.integrate_greenlight)
+        integrate_layout.addWidget(integrate_button)
+        modify_theme_button = QPushButton("Modify Theme")
+        modify_theme_button.setStyleSheet(self.BUTTON_STYLE)
+        modify_theme_button.clicked.connect(self.modify_theme)
+        integrate_layout.addWidget(modify_theme_button)
+        controls_layout.addLayout(integrate_layout)
+        self.start_button = QPushButton("Start Sync")
+        self.start_button.setFont(QFont('Sans', 12, QFont.Bold))
+        self.start_button.setMinimumHeight(50)
+        self.start_button.setStyleSheet(self.BUTTON_STYLE)
+        self.start_button.clicked.connect(self.start_sync)
+        controls_layout.addWidget(self.start_button)
         self.progress = QProgressBar()
         self.progress.setMinimum(0)
         self.progress.setMaximum(100)
         self.progress.setValue(0)
-        self.progress.setTextVisible(True)
-        main_layout.addWidget(self.progress)
+        controls_layout.addWidget(self.progress)
         self.status_label = QLabel("Status: Ready")
-        self.status_label.setStyleSheet("color: #333; font-size: 10pt;")
-        main_layout.addWidget(self.status_label)
-        buttons_layout = QHBoxLayout()
-        self.start_button = QPushButton("Start Sync")
-        self.start_button.clicked.connect(self.start_sync)
-        buttons_layout.addWidget(self.start_button)
-        self.clean_button = QPushButton("Clean All Media")
-        self.clean_button.clicked.connect(self.clean_all_media)
-        buttons_layout.addWidget(self.clean_button)
-        self.integrate_button = QPushButton("Integrate with ES-DE")
-        self.integrate_button.clicked.connect(self.integrate_greenlight)
-        buttons_layout.addWidget(self.integrate_button)
-        main_layout.addLayout(buttons_layout)
-        link_layout = QHBoxLayout()
-        link_label = QLabel('<a href="https://flathub.org/apps/io.github.unknownskl.greenlight">Get Greenlight from Flathub</a>')
-        link_label.setOpenExternalLinks(True)
-        link_label.setAlignment(Qt.AlignLeft)
-        link_layout.addWidget(link_label)
-        main_layout.addLayout(link_layout)
-        main_layout.addStretch(1)
-        main_widget.setLayout(main_layout)
-        self.setCentralWidget(main_widget)
+        self.status_label.setStyleSheet("color: #e0e0e0; font-size: 10pt;")
+        controls_layout.addWidget(self.status_label)
+        main_layout.addWidget(controls_group)
+        maintenance_group = QGroupBox("Maintenance")
+        maintenance_group.setStyleSheet(self.TITLE_STYLE)
+        maintenance_group.setMinimumWidth(500)
+        maintenance_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        maintenance_layout = QVBoxLayout(maintenance_group)
+        clean_button = QPushButton("Clean All Media")
+        clean_button.setStyleSheet(self.CLEAN_BUTTON_STYLE)
+        clean_button.clicked.connect(self.clean_all_media)
+        maintenance_layout.addWidget(clean_button)
+        main_layout.addWidget(maintenance_group)
+        main_layout.addStretch()
+        self.setCentralWidget(central_widget)
     def create_directory_section_widget(self):
         group = QGroupBox("Step 2: Select Folders")
+        group.setStyleSheet(self.TITLE_STYLE)
+        group.setMinimumWidth(500)
+        group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         layout = QVBoxLayout(group)
         layout.setSpacing(8)
         layout.setContentsMargins(10, 10, 10, 10)
         assets_row = QHBoxLayout()
         assets_label = QLabel("Assets Directory:")
-        assets_label.setFixedWidth(120)
+        assets_label.setFixedWidth(130)
         self.folder_entry = QLineEdit(self.settings.get("base_dir", ""))
         assets_browse = QPushButton("Browse")
+        assets_browse.setStyleSheet(self.BUTTON_STYLE)
         assets_browse.clicked.connect(lambda: self.browse_folder(self.folder_entry))
         assets_row.addWidget(assets_label)
         assets_row.addWidget(self.folder_entry)
@@ -451,9 +408,10 @@ class GreenlightSyncApp(QMainWindow):
         layout.addLayout(assets_row)
         games_row = QHBoxLayout()
         games_label = QLabel("Games Directory:")
-        games_label.setFixedWidth(120)
+        games_label.setFixedWidth(130)
         self.sh_folder_entry = QLineEdit(self.settings.get("sh_dir", ""))
         games_browse = QPushButton("Browse")
+        games_browse.setStyleSheet(self.BUTTON_STYLE)
         games_browse.clicked.connect(lambda: self.browse_folder(self.sh_folder_entry))
         games_row.addWidget(games_label)
         games_row.addWidget(self.sh_folder_entry)
@@ -461,15 +419,163 @@ class GreenlightSyncApp(QMainWindow):
         layout.addLayout(games_row)
         gamelist_row = QHBoxLayout()
         gamelist_label = QLabel("Gamelist Directory:")
-        gamelist_label.setFixedWidth(120)
+        gamelist_label.setFixedWidth(130)
         self.gamelist_folder_entry = QLineEdit(self.settings.get("gamelist_dir", ""))
         gamelist_browse = QPushButton("Browse")
+        gamelist_browse.setStyleSheet(self.BUTTON_STYLE)
         gamelist_browse.clicked.connect(lambda: self.browse_folder(self.gamelist_folder_entry))
         gamelist_row.addWidget(gamelist_label)
         gamelist_row.addWidget(self.gamelist_folder_entry)
         gamelist_row.addWidget(gamelist_browse)
         layout.addLayout(gamelist_row)
         return group
+    def modify_theme(self):
+        theme_folder = QFileDialog.getExistingDirectory(
+            self,
+            "Select Theme Folder to Modify (select the THEME ROOT directory)",
+            os.path.expanduser('~'),
+            QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks
+        )
+        if not theme_folder:
+            self.show_info("Modify Theme", "No folder selected.")
+            return
+        svg_url = "https://raw.githubusercontent.com/Boc86/xboxgp_esde_sync/main/themes/gp_logo.svg"
+        fanart_url = "https://raw.githubusercontent.com/Boc86/xboxgp_esde_sync/main/themes/gp_fanart.jpg"
+        systems_ok, sys_res = download_file_to_subfolder(theme_folder, ["_inc", "systems"], "greenlight.svg", svg_url)
+        fanart_ok, fanart_res = download_file_to_subfolder(theme_folder, ["_inc", "fanart"], "greenlight.jpg", fanart_url)
+        if systems_ok and fanart_ok:
+            self.show_info(
+                "Theme Modified",
+                "Greenlight theme assets have been added to the theme. "
+                "Check:\n"
+                f"- {os.path.join(theme_folder, '_inc', 'systems', 'greenlight.svg')}\n"
+                f"- {os.path.join(theme_folder, '_inc', 'fanart', 'greenlight.jpg')}"
+            )
+        else:
+            errors = []
+            if not systems_ok:
+                errors.append(f"SVG error: {sys_res}")
+            if not fanart_ok:
+                errors.append(f"Fanart error: {fanart_res}")
+            self.show_error(
+                "Modify Theme Error",
+                "Some or all theme files could not be downloaded/placed.\n" +
+                "\n".join(errors)
+            )
+    def integrate_greenlight(self):
+        try:
+            esde_folder = QFileDialog.getExistingDirectory(
+                self,
+                "Select ES-DE custom_systems Folder",
+                os.path.expanduser('~'),
+                QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks
+            )
+            if not esde_folder:
+                self.show_error("Error", "No folder selected.")
+                return
+            custom_systems_path = os.path.join(esde_folder, "es_systems.xml")
+            if not os.path.exists(custom_systems_path):
+                self.show_error("Error", "es_systems.xml not found in the selected folder.")
+                return
+            import xml.etree.ElementTree as ET
+            from xml.dom import minidom
+            try:
+                tree = ET.parse(custom_systems_path)
+                root = tree.getroot()
+            except ET.ParseError as pe:
+                self.show_error("Error", f"Error parsing es_systems.xml: {pe}")
+                return
+            if root.tag.lower() != "systemlist":
+                systemlist = root.find("systemList")
+                if systemlist is None:
+                    systemlist = ET.Element("systemList")
+                    systemlist.extend(list(root))
+                    root = systemlist
+                else:
+                    root = systemlist
+            else:
+                systemlist = root
+            exists = any(
+                system.find('name') is not None and system.find('name').text.strip().lower() == "greenlight"
+                for system in systemlist.findall('system')
+            )
+            if exists:
+                self.show_info("Info", "Greenlight is already integrated into ES-DE.")
+                return
+            games_dir = self.sh_folder_entry.text().strip()
+            if not games_dir:
+                self.show_error("Error", "Please set the Games Directory in Step 2.")
+                return
+            system_elem = ET.Element("system")
+            ET.SubElement(system_elem, "name").text = "greenlight"
+            ET.SubElement(system_elem, "fullname").text = "Xbox Game Pass"
+            ET.SubElement(system_elem, "path").text = f'bash "{games_dir}"'
+            ET.SubElement(system_elem, "extension").text = ".sh"
+            command_elem = ET.SubElement(system_elem, "command")
+            command_elem.set("label", "Greenlight")
+            command_elem.text = "bash %ROM%"
+            ET.SubElement(system_elem, "platform").text = "xbox"
+            ET.SubElement(system_elem, "theme").text = "greenlight"
+            systemlist.append(system_elem)
+            xmlstr = ET.tostring(systemlist, encoding='utf-8')
+            reparsed = minidom.parseString(xmlstr)
+            pretty_xml = reparsed.toprettyxml(indent="    ")
+            with open(custom_systems_path, "w", encoding="utf-8") as file:
+                file.write(pretty_xml)
+            self.show_info("Success", "Greenlight has been successfully integrated into ES-DE.")
+        except Exception as e:
+            self.show_error("Error", f"An error occurred: {e}")
+            logging.error(f"Error in integrate_greenlight: {e}")
+    def show_error(self, title, message):
+        QMessageBox.critical(self, title, message)
+    def show_info(self, title, message):
+        QMessageBox.information(self, title, message)
+    def start_sync(self):
+        base_dir = self.folder_entry.text().strip()
+        sh_dir = self.sh_folder_entry.text().strip()
+        gamelist_dir = self.gamelist_folder_entry.text().strip()
+        if not base_dir or not sh_dir or not gamelist_dir:
+            self.show_error("Error", "Please select folders for Assets, Games, and Gamelist.")
+            return
+        base_dir = ensure_greenlight_subdir(base_dir)
+        sh_dir = ensure_greenlight_subdir(sh_dir)
+        gamelist_dir = ensure_greenlight_subdir(gamelist_dir)
+        self.settings["base_dir"] = base_dir
+        self.settings["sh_dir"] = sh_dir
+        self.settings["gamelist_dir"] = gamelist_dir
+        save_settings(self.settings)
+        self.progress.setValue(0)
+        self.status_label.setText("Status: Sync in progress...")
+        self.status_label.setStyleSheet("color: #e0e0e0; font-size: 10pt;")
+        self.start_button.setEnabled(False)
+        self.worker = SyncWorker(base_dir, sh_dir, gamelist_dir)
+        self.worker.progress.connect(self.progress.setValue)
+        self.worker.finished.connect(self.sync_complete)
+        self.worker.error.connect(self.sync_error)
+        self.worker.start()
+    def sync_complete(self):
+        self.status_label.setText("Status: Sync complete!")
+        self.status_label.setStyleSheet("color: #4CAF50; font-size: 10pt;")
+        self.progress.setValue(100)
+        self.start_button.setEnabled(True)
+    def sync_error(self, message):
+        self.status_label.setText(f"Sync error: {message}")
+        self.status_label.setStyleSheet("color: #ff3333; font-size: 10pt;")
+        self.progress.setValue(0)
+        self.start_button.setEnabled(True)
+    def clean_all_media(self):
+        base_dir = self.folder_entry.text().strip()
+        sh_dir = self.sh_folder_entry.text().strip()
+        gamelist_dir = self.gamelist_folder_entry.text().strip()
+        base_dir = ensure_greenlight_subdir(base_dir)
+        sh_dir = ensure_greenlight_subdir(sh_dir)
+        gamelist_dir = ensure_greenlight_subdir(gamelist_dir)
+        reply = QMessageBox.question(
+            self,
+            "Confirm Clean",
+            "Are you sure you want to delete ALL synced media, videos, scripts, and gamelists for Greenlight? (This cannot be undone.)",
+            QMessageBox.Yes | QMessageBox.No
+            )
     def integrate_greenlight(self):
         try:
             esde_folder = QFileDialog.getExistingDirectory(
