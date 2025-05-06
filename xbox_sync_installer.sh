@@ -1,7 +1,7 @@
 #!/bin/bash
 
 APP_NAME="Xbox Sync"
-INSTALL_DIR="$HOME/Xbox Sync"
+INSTALL_DIR="$HOME/XboxSync"
 REPO_URL="https://github.com/Boc86/xboxgp_esde_sync"
 REPO_RAW="https://raw.githubusercontent.com/Boc86/xboxgp_esde_sync/main"
 PYTHON_SCRIPT="xboxgp_esde_sync.py"
