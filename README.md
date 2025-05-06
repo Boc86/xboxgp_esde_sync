@@ -24,7 +24,7 @@
 ## Installation
 
 ### Requirements
-- **OS:** Linux (tested on Ubuntu/Debian)
+- **OS:** Linux (tested on Ubuntu/Debian Nobara 41 & 42/Fedora)
 - **Python:** 3.8+
 - **Dependencies:**
   - PyQt5
