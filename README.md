@@ -20,8 +20,17 @@
 - **Logging:** Detailed log file (`xboxgames_debug.log`) for troubleshooting.
 
 ---
+## Instalation
 
-## Installation
+## Script Installation
+- Download the installer from the [Releases](https://github.com/Boc86/xboxgp_esde_sync/releases) section
+- Make the installer executable with (you may need to use sudo depending on your setup) 
+```bash
+chmod +x xbox_sync_installer.sh
+```
+- Run the installer
+
+## Manual Installation
 
 ### Requirements
 - **OS:** Linux (tested on Ubuntu/Debian Nobara 41 & 42/Fedora)

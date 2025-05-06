@@ -7,6 +7,7 @@ REPO_RAW="https://raw.githubusercontent.com/Boc86/xboxgp_esde_sync/main"
 PYTHON_SCRIPT="xboxgp_esde_sync.py"
 REQUIREMENTS="requirements.txt"
 ICON_FILE="icon.png"
+INSTALLER_FILE="xbox_sync_installer.sh"
 DESKTOP_FILE="$HOME/.local/share/applications/xboxgp_esde_sync.desktop"
 VENV_DIR="$INSTALL_DIR/venv"
 
@@ -34,6 +35,7 @@ install_app() {
     curl -O "$REPO_RAW/$PYTHON_SCRIPT"
     curl -O "$REPO_RAW/$REQUIREMENTS"
     curl -O "$REPO_RAW/$ICON_FILE"
+    curl -O "$REPO_RAW/$INSTALLER_FILE"
 
     echo "Creating virtual environment..."
     python3 -m venv "$VENV_DIR"
@@ -55,6 +57,7 @@ update_app() {
     curl -O "$REPO_RAW/$PYTHON_SCRIPT"
     curl -O "$REPO_RAW/$REQUIREMENTS"
     curl -O "$REPO_RAW/$ICON_FILE"
+    curl -o "$REPO_RAW/$INSTALLER_FILE"
 
     source "$VENV_DIR/bin/activate"
     pip install -r "$REQUIREMENTS"
