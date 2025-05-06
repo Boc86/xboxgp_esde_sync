@@ -3,6 +3,7 @@ __pycach__
 .flatpak
 .flatpak-builder
 .vscode
+.qodo
 python-deps-src
 io.github.xboxgp_esde_sync.desktop
 io.github.xboxgp_esde_sync.yaml

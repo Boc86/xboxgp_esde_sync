@@ -1,0 +1,90 @@
+#!/bin/bash
+
+APP_NAME="Xbox Sync"
+INSTALL_DIR="$HOME/Xbox Sync"
+REPO_URL="https://github.com/Boc86/xboxgp_esde_sync"
+REPO_RAW="https://raw.githubusercontent.com/Boc86/xboxgp_esde_sync/main"
+PYTHON_SCRIPT="xboxgp_esde_sync.py"
+REQUIREMENTS="requirements.txt"
+ICON_FILE="icon.png"
+DESKTOP_FILE="$HOME/.local/share/applications/xboxgp_esde_sync.desktop"
+VENV_DIR="$INSTALL_DIR/venv"
+
+create_desktop_file() {
+    mkdir -p "$(dirname "$DESKTOP_FILE")"
+    cat > "$DESKTOP_FILE" <<EOF
+[Desktop Entry]
+Name=$APP_NAME
+Exec=$VENV_DIR/bin/python $INSTALL_DIR/$PYTHON_SCRIPT
+Icon=$INSTALL_DIR/$ICON_FILE
+Type=Application
+Categories=Game;
+Terminal=false
+EOF
+    chmod +x "$DESKTOP_FILE"
+    cp "$DESKTOP_FILE" "$HOME/Desktop/" 2>/dev/null
+}
+
+install_app() {
+    echo "Installing $APP_NAME..."
+    mkdir -p "$INSTALL_DIR"
+    cd "$INSTALL_DIR" || exit
+
+    echo "Downloading files..."
+    curl -O "$REPO_RAW/$PYTHON_SCRIPT"
+    curl -O "$REPO_RAW/$REQUIREMENTS"
+    curl -O "$REPO_RAW/$ICON_FILE"
+
+    echo "Creating virtual environment..."
+    python3 -m venv "$VENV_DIR"
+    source "$VENV_DIR/bin/activate"
+    pip install --upgrade pip
+    pip install -r "$REQUIREMENTS"
+    deactivate
+
+    echo "Creating desktop shortcut..."
+    create_desktop_file
+
+    echo "$APP_NAME installed successfully."
+}
+
+update_app() {
+    echo "Updating $APP_NAME..."
+    cd "$INSTALL_DIR" || { echo "App not found. Please install it first."; exit 1; }
+
+    curl -O "$REPO_RAW/$PYTHON_SCRIPT"
+    curl -O "$REPO_RAW/$REQUIREMENTS"
+    curl -O "$REPO_RAW/$ICON_FILE"
+
+    source "$VENV_DIR/bin/activate"
+    pip install -r "$REQUIREMENTS"
+    deactivate
+
+    create_desktop_file
+
+    echo "$APP_NAME updated successfully."
+}
+
+uninstall_app() {
+    echo "Uninstalling $APP_NAME..."
+    rm -rf "$INSTALL_DIR"
+    rm -f "$DESKTOP_FILE"
+    rm -f "$HOME/Desktop/$(basename "$DESKTOP_FILE")"
+    echo "$APP_NAME uninstalled successfully."
+}
+
+# Main CLI
+case "$1" in
+    install)
+        install_app
+        ;;
+    update)
+        update_app
+        ;;
+    uninstall)
+        uninstall_app
+        ;;
+    *)
+        echo "Usage: $0 {install|update|uninstall}"
+        ;;
+esac
