@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 APP_NAME="Xbox Sync"
@@ -73,18 +74,32 @@ uninstall_app() {
     echo "$APP_NAME uninstalled successfully."
 }
 
-# Main CLI
-case "$1" in
-    install)
+# Welcome message
+echo "==========================================="
+echo "       Welcome to the $APP_NAME Installer"
+echo "==========================================="
+echo ""
+echo "Please choose an option:"
+echo "1) Install $APP_NAME"
+echo "2) Update $APP_NAME"
+echo "3) Uninstall $APP_NAME"
+echo ""
+
+read -p "Enter your choice (1, 2, or 3): " CHOICE
+
+case "$CHOICE" in
+    1)
         install_app
         ;;
-    update)
+    2)
         update_app
         ;;
-    uninstall)
+    3)
         uninstall_app
         ;;
     *)
-        echo "Usage: $0 {install|update|uninstall}"
+        echo "Invalid selection. Please run the script again and select 1, 2, or 3."
+        exit 1
         ;;
 esac
+
