@@ -261,7 +261,7 @@ async def main(base_dir, gamelist_dir, rom_dir, download_videos=False, progress_
         valid_titles = set()
         files_created = {"sh": 0, "logo": 0, "poster": 0, "fanart": 0}
         marquee_dir = os.path.join(assets_dir, "marquee")
-        cover_dir = os.path.join(assets_dir, "cover")
+        cover_dir = os.path.join(assets_dir, "covers")
         fanart_dir = os.path.join(assets_dir, "fanart")
         async with aiohttp.ClientSession() as session:
             coros = []
@@ -624,7 +624,7 @@ class GreenlightSyncApp(QMainWindow):
         if reply == QMessageBox.Yes:
             paths_to_clean = [
                 os.path.join(base_dir, "marquee"),
-                os.path.join(base_dir, "cover"),
+                os.path.join(base_dir, "covers"),
                 os.path.join(base_dir, "fanart"),
                 sh_dir,
                 gamelist_dir,
