@@ -23,13 +23,17 @@ from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QFont, QIcon
 
 os.environ["QT_QPA_PLATFORM"] = "xcb"
-SETTINGS_FILE = "settings.json"
-CACHE_FILE = "additional_data.json"
-CACHE_TIMESTAMP_FILE = "additional_data.timestamp"
+
+# Get the directory where this script is located
+APP_DIR = os.path.dirname(os.path.abspath(__file__))
+
+SETTINGS_FILE = os.path.join(APP_DIR, "settings.json")
+CACHE_FILE = os.path.join(APP_DIR, "additional_data.json")
+CACHE_TIMESTAMP_FILE = os.path.join(APP_DIR, "additional_data.timestamp")
 CACHE_EXPIRY_SECONDS = 24 * 60 * 60
 
 def check_and_clear_log_file():
-    log_file = "xboxgames_debug.log"
+    log_file = os.path.join(APP_DIR, "xboxgames_debug.log")
     max_size = 1024 * 1024
     if os.path.exists(log_file) and os.path.getsize(log_file) >= max_size:
         with open(log_file, 'w') as f:
@@ -40,7 +44,7 @@ logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler("xboxgames_debug.log"),
+        logging.FileHandler(os.path.join(APP_DIR, "xboxgames_debug.log")),
         logging.StreamHandler()
     ]
 )
@@ -108,7 +112,7 @@ def save_additional_data_to_json(id_strings):
                 "DASH": next((video.get("DASH") for video in item.get("LocalizedProperties", [{}])[0].get("CMSVideos", []) if video.get("DASH")), None)
             }
             extracted_data.append(entry)
-        output_path = os.path.join(os.getcwd(), CACHE_FILE)
+        output_path = CACHE_FILE  # Already absolute
         with open(output_path, "w", encoding="utf-8") as json_file:
             json.dump(extracted_data, json_file, indent=4)
         update_cache_timestamp()
@@ -367,7 +371,7 @@ class GreenlightSyncApp(QMainWindow):
     def init_ui(self):
         self.setWindowTitle('Xbox Game Pass Sync')
         self.setMinimumSize(900, 600)
-        self.setWindowIcon(QIcon(os.path.join(os.path.dirname(os.path.abspath(__file__)), "icon.png")))
+        self.setWindowIcon(QIcon(os.path.join(APP_DIR, "icon.png")))
         central_widget = QWidget()
         main_layout = QVBoxLayout(central_widget)
         main_layout.setSpacing(15)
