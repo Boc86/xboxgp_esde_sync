@@ -64,7 +64,7 @@ pip install PyQt5 requests Pillow aiohttp aiofiles
   ```bash
   chmod +x xboxgp_esde_sync.py
   ```
-  -- Open a terminal from the directory and run the script
+  - Open a terminal from the directory and run the script
   ```bash
   python3 xboxgp_esde_sync.py
   ```
