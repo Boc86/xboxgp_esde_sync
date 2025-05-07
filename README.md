@@ -31,7 +31,7 @@ chmod +x xbox_sync_installer.sh
 ```
 - Run the installer
 
-## Manual Installation
+## Manual Installation (May cause conflicts with system python packages, only use if you know what you are doing)
 
 ### Requirements
 - **OS:** Linux (tested on Ubuntu/Debian Nobara 41 & 42/Fedora)
