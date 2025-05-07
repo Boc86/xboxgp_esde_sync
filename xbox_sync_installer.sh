@@ -103,6 +103,8 @@ update_app() {
     # If the binary executable exists, update only the binary and related files
     if [ -f "$INSTALL_DIR/$BINARY_NAME" ]; then
         echo "Detected binary executable installation. Updating only binary-related files..."
+        rm -f "$INSTALL_DIR/$BINARY_NAME"
+        rm -f "$INSTALL_DIR/$INSTALLER_FILE"        
         curl -O "$REPO_RAW/$BINARY_FILE"
         mv $(basename "$BINARY_FILE") "$BINARY_NAME"
         chmod +x "$BINARY_NAME"
@@ -111,6 +113,9 @@ update_app() {
     # Otherwise, if the Python script + venv exist, update only Python files and requirements
     elif [ -f "$INSTALL_DIR/$PYTHON_SCRIPT" ] && [ -d "$VENV_DIR" ]; then
         echo "Detected Python virtual environment installation. Updating Python files and dependencies..."
+        rm -f "$INSTALL_DIR/$PYTHON_SCRIPT"
+        rm -f "$INSTALL_DIR/$REQUIREMENTS"
+        rm -f "$INSTALL_DIR/$INSTALLER_FILE"
         curl -O "$REPO_RAW/$PYTHON_SCRIPT"
         curl -O "$REPO_RAW/$REQUIREMENTS"
         curl -O "$REPO_RAW/$ICON_FILE"
