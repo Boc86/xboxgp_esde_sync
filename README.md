@@ -30,7 +30,7 @@
 chmod +x xbox_sync_installer.sh
 ```
 - Run the installer. Do not run the installer as sudo as this will cause issues when trying to run the gui
-- ```bash
+```bash
 ./box_sync_installer.sh
 ```
 - Option 1 will set up a virtual environment to run the python code in, this avoids any conflict with system python packages and allows you to tweak the code if necessary. Updating will remove any tweaks
