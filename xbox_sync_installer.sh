@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 APP_NAME="Xbox Sync"
@@ -82,13 +83,12 @@ install_binary() {
     cd "$INSTALL_DIR" || exit
 
     echo "Downloading binary executable..."
-    echo $REPO_RAW/$BINARY_FILE
     curl -O "$REPO_RAW/$BINARY_FILE"
+    mv $(basename "$BINARY_FILE") "$BINARY_NAME"
     chmod +x "$BINARY_NAME"
     echo "Downloading icon..."
     curl -O "$REPO_RAW/$ICON_FILE"
     echo "Downloading installer..."
-    echo $REPO_RAW/$INSTALLER_FILE
     curl -O "$REPO_RAW/$INSTALLER_FILE"
     chmod +x "$INSTALLER_FILE"
     echo "Creating desktop shortcut..."
@@ -100,21 +100,28 @@ update_app() {
     echo "Updating $APP_NAME..."
     cd "$INSTALL_DIR" || { echo "App not found. Please install it first."; exit 1; }
 
-    #check for binary file in install dir
-    if [ -f "$INSTALL_DIR/$BINARY_FILE" ]; then
-        echo "Updating binary executable..."
+    # If the binary executable exists, update only the binary and related files
+    if [ -f "$INSTALL_DIR/$BINARY_NAME" ]; then
+        echo "Detected binary executable installation. Updating only binary-related files..."
         curl -O "$REPO_RAW/$BINARY_FILE"
+        mv $(basename "$BINARY_FILE") "$BINARY_NAME"
+        chmod +x "$BINARY_NAME"
         curl -O "$REPO_RAW/$ICON_FILE"
-        curl -o "$REPO_RAW/$INSTALLER_FILE"
-    else
-        echo "Updating Python files..."
+        curl -O "$REPO_RAW/$INSTALLER_FILE"
+    # Otherwise, if the Python script + venv exist, update only Python files and requirements
+    elif [ -f "$INSTALL_DIR/$PYTHON_SCRIPT" ] && [ -d "$VENV_DIR" ]; then
+        echo "Detected Python virtual environment installation. Updating Python files and dependencies..."
         curl -O "$REPO_RAW/$PYTHON_SCRIPT"
         curl -O "$REPO_RAW/$REQUIREMENTS"
         curl -O "$REPO_RAW/$ICON_FILE"
-        curl -o "$REPO_RAW/$INSTALLER_FILE"
+        curl -O "$REPO_RAW/$INSTALLER_FILE"
         source "$VENV_DIR/bin/activate"
+        pip install --upgrade pip
         pip install -r "$REQUIREMENTS"
         deactivate
+    else
+        echo "No valid install detected. Please reinstall $APP_NAME."
+        exit 1
     fi
 
     echo "Updating desktop shortcut..."
@@ -159,8 +166,7 @@ case "$CHOICE" in
         uninstall_app
         ;;
     *)
-        echo "Invalid selection. Please run the script again and select 1, 2, or 3."
-
+        echo "Invalid selection. Please run the script again and select 1, 2, 3, or 4."
         ;;
 esac
 
