@@ -30,7 +30,7 @@ def get_app_dir():
 
 os.environ["QT_QPA_PLATFORM"] = "xcb"
 
-APP_DIR = os.path.dirname(os.path.abspath(__file__))
+APP_DIR = get_app_dir()
 
 SETTINGS_FILE = os.path.join(APP_DIR, "settings.json")
 CACHE_FILE = os.path.join(APP_DIR, "additional_data.json")
