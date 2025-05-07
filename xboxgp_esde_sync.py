@@ -22,7 +22,6 @@ from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QFont, QIcon
 
 def get_app_dir():
-    """Returns the directory containing this script or the PyInstaller executable on Linux."""
     if getattr(sys, 'frozen', False):
         return os.path.dirname(os.path.abspath(sys.executable))
     else:
@@ -117,7 +116,7 @@ def save_additional_data_to_json(id_strings):
                 "DASH": next((video.get("DASH") for video in item.get("LocalizedProperties", [{}])[0].get("CMSVideos", []) if video.get("DASH")), None)
             }
             extracted_data.append(entry)
-        output_path = CACHE_FILE  # Already absolute
+        output_path = CACHE_FILE
         with open(output_path, "w", encoding="utf-8") as json_file:
             json.dump(extracted_data, json_file, indent=4)
         update_cache_timestamp()
@@ -362,6 +361,20 @@ class GreenlightSyncApp(QMainWindow):
             color: white;
         }}
     """
+    UPDATE_BUTTON_STYLE = f"""
+        QPushButton {{
+            background-color: #222;
+            color: #2196F3;
+            font-weight: bold;
+            border-radius: 6px;
+            border: 1px solid #484848;
+            padding: 7px 16px;
+        }}
+        QPushButton:pressed {{
+            background-color: #107C1099;
+            color: white;
+        }}
+    """
     def __init__(self):
         super().__init__()
         self.settings = load_settings()
@@ -434,10 +447,20 @@ class GreenlightSyncApp(QMainWindow):
         maintenance_group.setMinimumWidth(500)
         maintenance_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         maintenance_layout = QVBoxLayout(maintenance_group)
+        maintenance_layout.setSpacing(10)
+
+        buttons_row = QHBoxLayout()
+        buttons_row.addStretch(1)
         clean_button = QPushButton("Clean All Media")
         clean_button.setStyleSheet(self.CLEAN_BUTTON_STYLE)
         clean_button.clicked.connect(self.clean_all_media)
-        maintenance_layout.addWidget(clean_button)
+        buttons_row.addWidget(clean_button)
+        update_button = QPushButton("Update")
+        update_button.setStyleSheet(self.UPDATE_BUTTON_STYLE)
+        update_button.clicked.connect(self.update_app)
+        buttons_row.addWidget(update_button)
+        buttons_row.addStretch(1)
+        maintenance_layout.addLayout(buttons_row)
         main_layout.addWidget(maintenance_group)
         main_layout.addStretch()
         self.setCentralWidget(central_widget)
@@ -646,6 +669,40 @@ class GreenlightSyncApp(QMainWindow):
                 elif os.path.isfile(p):
                     os.remove(p)
             self.show_info("Clean Complete", "All Greenlight media and data have been deleted.")
+    def update_app(self):
+        import platform
+        from PyQt5.QtWidgets import QApplication
+        script_path = os.path.join(APP_DIR, "xbox_sync_installer.sh")
+        if not os.path.isfile(script_path):
+            self.show_error("Update Error", f"Installer script not found:\n{script_path}")
+            return
+        reply = QMessageBox.question(
+            self,
+            "Confirm Update",
+            "This will close the application and run the update installer script.\nContinue?",
+            QMessageBox.Yes | QMessageBox.No
+        )
+        if reply != QMessageBox.Yes:
+            return
+        try:
+            if platform.system() == "Linux":
+                QApplication.instance().closeAllWindows()
+                subprocess.Popen(
+                    ["setsid", "bash", script_path],
+                    close_fds=True,
+                    start_new_session=True,
+                    cwd=APP_DIR
+                )
+            else:
+                QApplication.instance().closeAllWindows()
+                subprocess.Popen(
+                    ["bash", script_path],
+                    close_fds=True,
+                    cwd=APP_DIR
+                )
+            QApplication.instance().quit()
+        except Exception as e:
+            self.show_error("Update Error", f"Failed to run update script: {e}")
 
 def main_app():
     app = QApplication(sys.argv)
@@ -655,3 +712,4 @@ def main_app():
 
 if __name__ == "__main__":
     main_app()
+    sys.exit(app.exec_())
