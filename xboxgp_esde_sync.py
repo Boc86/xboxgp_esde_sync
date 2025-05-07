@@ -672,34 +672,38 @@ class GreenlightSyncApp(QMainWindow):
     def update_app(self):
         import platform
         from PyQt5.QtWidgets import QApplication
+
         script_path = os.path.join(APP_DIR, "xbox_sync_installer.sh")
         if not os.path.isfile(script_path):
             self.show_error("Update Error", f"Installer script not found:\n{script_path}")
             return
+
         reply = QMessageBox.question(
             self,
             "Confirm Update",
-            "This will close the application and run the update installer script.\nContinue?",
+            "This will close the application and open a terminal to run the update installer script.\nContinue?",
             QMessageBox.Yes | QMessageBox.No
         )
         if reply != QMessageBox.Yes:
             return
+
         try:
-            if platform.system() == "Linux":
+            term_commands = [
+                ["gnome-terminal", "--", "bash", script_path],
+                ["konsole", "-e", "bash", script_path],
+                ["xfce4-terminal", "-e", f"bash {script_path}"],
+                ["xterm", "-e", f"bash {script_path}"]
+            ]
+            found = False
+            for cmd in term_commands:
+                if shutil.which(cmd[0]):
+                    found = True
+                    QApplication.instance().closeAllWindows()
+                    subprocess.Popen(cmd, cwd=APP_DIR)
+                    break
+            if not found:
                 QApplication.instance().closeAllWindows()
-                subprocess.Popen(
-                    ["setsid", "bash", script_path],
-                    close_fds=True,
-                    start_new_session=True,
-                    cwd=APP_DIR
-                )
-            else:
-                QApplication.instance().closeAllWindows()
-                subprocess.Popen(
-                    ["bash", script_path],
-                    close_fds=True,
-                    cwd=APP_DIR
-                )
+                subprocess.Popen(["bash", script_path], cwd=APP_DIR)
             QApplication.instance().quit()
         except Exception as e:
             self.show_error("Update Error", f"Failed to run update script: {e}")
