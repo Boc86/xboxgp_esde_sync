@@ -81,15 +81,18 @@ pip install PyQt5 requests Pillow aiohttp aiofiles
    ```
 3. **Configure Directories:**
    - Set the assets, games (scripts), and gamelist directories using the GUI.
+   - Depending on your ES-DE install method these are usually located in /Home/$USER%/Emulation/tools/downloaded_media/, /Home/$USER%/Emulation/tools/roms/, and /Home/$USER%/ES-DE/gamelists/
 4. **Greenlight Integration:**
-   - Use the "Download Greenlight" button to visit Flathub.
+   - Use the "Download Greenlight" button to visit Flathub and install Greenlight.
    - Use "Integrate with ES-DE" to add Greenlight as a system in ES-DE.
-   - Use "Create Theme" to generate a basic theme and download logo/fanart.
+   - Use "Create Theme" to generate a basic theme and download logo/fanart. This can be applied to any theme you use, just select the theme folder in the file browser i.e. /Home/$USER%/ES-DE/themes/coinops-es-de/
 5. **Sync:**
    - Click "Start Sync" to fetch games, download assets, and generate scripts/metadata.
    - Progress and status are shown in the GUI.
+   - The first time you run the sync will take some time as Game Pass usually hosts 350 plus games and you will download videos for all of them, future syncs will only add new additions to the catalogue so will run much faster.
 6. **Clean Start (Optional):**
    - Use the "Clean Start Options" to delete old scripts, artwork, or videos before syncing.
+   - This is not necessary for removing games no longer on Game Pass as this is handled during the sync process.
 
 ### GUI Overview
 - **Introduction:** Explains the tool and its purpose.
@@ -104,6 +107,7 @@ pip install PyQt5 requests Pillow aiohttp aiofiles
 - Settings are saved in `settings.json` in the script directory.
 - Default directories can be changed at any time via the GUI.
 - The tool will create subfolders for marquees, covers, fanart, and videos under the assets directory.
+- It will add a system entry for Greenlight in the custom systems es_systems.xml 
 
 ---
 
