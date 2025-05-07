@@ -84,9 +84,9 @@ update_app() {
         curl -O "$REPO_RAW/$ICON_FILE"
         curl -o "$REPO_RAW/$INSTALLER_FILE"
 
-    source "$VENV_DIR/bin/activate"
-    pip install -r "$REQUIREMENTS"
-    deactivate
+        source "$VENV_DIR/bin/activate"
+        pip install -r "$REQUIREMENTS"
+        deactivate
 
     create_desktop_file
 
