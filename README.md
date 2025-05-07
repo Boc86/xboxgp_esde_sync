@@ -59,15 +59,15 @@ pip install PyQt5 requests Pillow aiohttp aiofiles
     sudo apt install ffmpeg
     ```
 - **Download Source Code**
-- Download the source code from above
-- Make the python file executable (you may need to use sudo depending on your setup) 
-```bash
-chmod +x xboxgp_esde_sync.py
-```
--- Open a terminal from the directory and run the script
-```bash
-python3 xboxgp_esde_sync.py
-```
+  - Download the source code from above
+  - Make the python file executable (you may need to use sudo depending on your setup) 
+  ```bash
+  chmod +x xboxgp_esde_sync.py
+  ```
+  -- Open a terminal from the directory and run the script
+  ```bash
+  python3 xboxgp_esde_sync.py
+  ```
 
 ---
 
