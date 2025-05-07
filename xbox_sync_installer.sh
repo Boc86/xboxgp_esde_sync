@@ -10,6 +10,7 @@ ICON_FILE="icon.png"
 INSTALLER_FILE="xbox_sync_installer.sh"
 DESKTOP_FILE="$HOME/.local/share/applications/xboxgp_esde_sync.desktop"
 VENV_DIR="$INSTALL_DIR/venv"
+BINARY_FILE="xboxgp_esde_sync"
 
 create_desktop_file() {
     mkdir -p "$(dirname "$DESKTOP_FILE")"
@@ -50,14 +51,34 @@ install_app() {
     echo "$APP_NAME installed successfully."
 }
 
+install_binary() {
+    echo "Installing $APP_NAME (Binary Executable)..."
+    mkdir -p "$INSTALL_DIR"
+    cd "$INSTALL_DIR" || exit
+
+    echo "Downloading binary executable..."
+    curl -O "$REPO_RAW/$BINARY_FILE"
+
+    echo "Creating desktop shortcut..."
+    create_desktop_file
+
+    echo "$APP_NAME installed successfully."
+}
+
 update_app() {
     echo "Updating $APP_NAME..."
     cd "$INSTALL_DIR" || { echo "App not found. Please install it first."; exit 1; }
 
-    curl -O "$REPO_RAW/$PYTHON_SCRIPT"
-    curl -O "$REPO_RAW/$REQUIREMENTS"
-    curl -O "$REPO_RAW/$ICON_FILE"
-    curl -o "$REPO_RAW/$INSTALLER_FILE"
+    #check for binary file in install dir
+    if [ -f "$INSTALL_DIR/$BINARY_FILE" ]; then
+        echo "Updating binary executable..."
+        curl -O "$REPO_RAW/$BINARY_FILE"
+    fi
+        echo "Updating Python files..."
+        curl -O "$REPO_RAW/$PYTHON_SCRIPT"
+        curl -O "$REPO_RAW/$REQUIREMENTS"
+        curl -O "$REPO_RAW/$ICON_FILE"
+        curl -o "$REPO_RAW/$INSTALLER_FILE"
 
     source "$VENV_DIR/bin/activate"
     pip install -r "$REQUIREMENTS"
@@ -82,21 +103,25 @@ echo "       Welcome to the $APP_NAME Installer"
 echo "==========================================="
 echo ""
 echo "Please choose an option:"
-echo "1) Install $APP_NAME"
-echo "2) Update $APP_NAME"
-echo "3) Uninstall $APP_NAME"
+echo "1) Install $APP_NAME (Python Virtual Environment)"
+echo "2) Install $APP_NAME (Binary Executable)"
+echo "3) Update $APP_NAME"
+echo "4) Uninstall $APP_NAME"
 echo ""
 
-read -p "Enter your choice (1, 2, or 3): " CHOICE
+read -p "Enter your choice (1, 2, 3, or 4): " CHOICE
 
 case "$CHOICE" in
     1)
         install_app
         ;;
     2)
-        update_app
+        install_binary
         ;;
     3)
+        update_app
+        ;;
+    4)
         uninstall_app
         ;;
     *)
