@@ -21,6 +21,7 @@
 
 ---
 ## Instalation
+- Currently tested on Ubuntu 21.04 LTS/Debian and Nobara 41 & 42/Fedora) but should run on any Linux flavour including Steam Deck
 
 ## Script Installation (Prefered method)
 - The script will set up a virtual environment to run the python code in, this avoids any conflict with system python packages
