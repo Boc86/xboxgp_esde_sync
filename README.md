@@ -47,6 +47,10 @@ Install dependencies with pip:
 ```bash
 pip install PyQt5 requests Pillow aiohttp aiofiles
 ```
+or
+```bash
+pip install -r requirements.txt
+```
 
 - **Greenlight Flatpak:**
   - Install from [Flathub](https://flathub.org/apps/io.github.unknownskl.greenlight):
