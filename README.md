@@ -88,7 +88,7 @@ pip install -r requirements.txt
    python3 xboxgp_esde_sync.py
    ```
 3. **Configure Directories:**
-   - Set the assets, games (scripts), and gamelist directories using the GUI.
+   - Set the assets, games (ROMs), and gamelist directories using the GUI.
    - Depending on your ES-DE install method these are usually located in /Home/$USER%/Emulation/tools/downloaded_media/, /Home/$USER%/Emulation/tools/roms/, and /Home/$USER%/ES-DE/gamelists/
 4. **Greenlight Integration:**
    - Use the "Download Greenlight" button to visit Flathub and install Greenlight.
