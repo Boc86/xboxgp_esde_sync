@@ -58,7 +58,9 @@ install_binary() {
 
     echo "Downloading binary executable..."
     curl -O "$REPO_RAW/$BINARY_FILE"
+    echo "Downloading icon..."
     curl -O "$REPO_RAW/$ICON_FILE"
+    echo "Downloading installer..."
     curl -o "$REPO_RAW/$INSTALLER_FILE"
 
     echo "Creating desktop shortcut..."
