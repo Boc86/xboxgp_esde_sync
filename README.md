@@ -74,19 +74,21 @@ pip install PyQt5 requests Pillow aiohttp aiofiles
 ## Usage
 
 1. **Launch the App:**
+   - If you used the installer script a desktop shortcut will be created so you can easily launch the sync gui
+   - If you installed manually open a terminal from the download directory and run
    ```bash
    python3 xboxgp_esde_sync.py
    ```
-2. **Configure Directories:**
+3. **Configure Directories:**
    - Set the assets, games (scripts), and gamelist directories using the GUI.
-3. **Greenlight Integration:**
+4. **Greenlight Integration:**
    - Use the "Download Greenlight" button to visit Flathub.
    - Use "Integrate with ES-DE" to add Greenlight as a system in ES-DE.
    - Use "Create Theme" to generate a basic theme and download logo/fanart.
-4. **Sync:**
+5. **Sync:**
    - Click "Start Sync" to fetch games, download assets, and generate scripts/metadata.
    - Progress and status are shown in the GUI.
-5. **Clean Start (Optional):**
+6. **Clean Start (Optional):**
    - Use the "Clean Start Options" to delete old scripts, artwork, or videos before syncing.
 
 ### GUI Overview
