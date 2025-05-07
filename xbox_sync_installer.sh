@@ -62,10 +62,8 @@ install_binary() {
     curl -O "$REPO_RAW/$ICON_FILE"
     echo "Downloading installer..."
     curl -o "$REPO_RAW/$INSTALLER_FILE"
-
     echo "Creating desktop shortcut..."
     create_desktop_file
-
     echo "$APP_NAME installed successfully."
 }
 
@@ -79,17 +77,18 @@ update_app() {
         curl -O "$REPO_RAW/$BINARY_FILE"
         curl -O "$REPO_RAW/$ICON_FILE"
         curl -o "$REPO_RAW/$INSTALLER_FILE"
-    fi
+    else
         echo "Updating Python files..."
         curl -O "$REPO_RAW/$PYTHON_SCRIPT"
         curl -O "$REPO_RAW/$REQUIREMENTS"
         curl -O "$REPO_RAW/$ICON_FILE"
         curl -o "$REPO_RAW/$INSTALLER_FILE"
-
         source "$VENV_DIR/bin/activate"
         pip install -r "$REQUIREMENTS"
         deactivate
+    fi
 
+    echo "Updating desktop shortcut..."
     create_desktop_file
 
     echo "$APP_NAME updated successfully."
