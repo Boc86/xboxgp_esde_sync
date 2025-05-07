@@ -29,7 +29,10 @@
 ```bash
 chmod +x xbox_sync_installer.sh
 ```
-- Run the installer
+- Run the installer. Do not run the installer as sudo as this will cause issues when trying to run the gui
+- ```bash
+./box_sync_installer.sh
+```
 - Option 1 will set up a virtual environment to run the python code in, this avoids any conflict with system python packages and allows you to tweak the code if necessary. Updating will remove any tweaks
 - Option 2 downloads a binary executable which is much smaller in size but doesn't allow for any code tweaks
 - The installer will put all files in /Home/%USER%/XboxSync/, including a copy of the installer which can be used to update and uninstall the script
