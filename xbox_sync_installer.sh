@@ -10,11 +10,24 @@ ICON_FILE="icon.png"
 INSTALLER_FILE="xbox_sync_installer.sh"
 DESKTOP_FILE="$HOME/.local/share/applications/xboxgp_esde_sync.desktop"
 VENV_DIR="$INSTALL_DIR/venv"
-BINARY_FILE="xboxgp_esde_sync"
+BINARY_FILE="/dist/xboxgp_esde_sync"
 
 create_desktop_file() {
     mkdir -p "$(dirname "$DESKTOP_FILE")"
-    cat > "$DESKTOP_FILE" <<EOF
+    if [ -f "$INSTALL_DIR/$BINARY_FILE" ]; then
+        cat > "$DESKTOP_FILE" <<EOF
+[Desktop Entry]
+Name=$APP_NAME
+Exec=$INSTALL_DIR/$BINARY_FILE
+Icon=$INSTALL_DIR/$ICON_FILE
+Type=Application
+Categories=Game;
+Terminal=false
+EOF
+        chmod +x "$DESKTOP_FILE"
+        cp "$DESKTOP_FILE" "$HOME/Desktop/" 2>/dev/null
+    else
+        cat > "$DESKTOP_FILE" <<EOF
 [Desktop Entry]
 Name=$APP_NAME
 Exec=$VENV_DIR/bin/python $INSTALL_DIR/$PYTHON_SCRIPT
@@ -23,8 +36,9 @@ Type=Application
 Categories=Game;
 Terminal=false
 EOF
-    chmod +x "$DESKTOP_FILE"
-    cp "$DESKTOP_FILE" "$HOME/Desktop/" 2>/dev/null
+        chmod +x "$DESKTOP_FILE"
+        cp "$DESKTOP_FILE" "$HOME/Desktop/" 2>/dev/null
+    fi
 }
 
 install_app() {
@@ -62,6 +76,7 @@ install_binary() {
     echo "Downloading icon..."
     curl -O "$REPO_RAW/$ICON_FILE"
     echo "Downloading installer..."
+    echo $REPO_RAW/$INSTALLER_FILE
     curl -O "$REPO_RAW/$INSTALLER_FILE"
     chmod +x "$INSTALLER_FILE"
     echo "Creating desktop shortcut..."
