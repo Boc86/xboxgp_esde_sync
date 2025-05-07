@@ -10,15 +10,17 @@ ICON_FILE="icon.png"
 INSTALLER_FILE="xbox_sync_installer.sh"
 DESKTOP_FILE="$HOME/.local/share/applications/xboxgp_esde_sync.desktop"
 VENV_DIR="$INSTALL_DIR/venv"
-BINARY_FILE="/dist/xboxgp_esde_sync"
+BINARY_FILE="dist/xboxgp_esde_sync"
+BINARY_NAME="xboxgp_esde_sync"
 
 create_desktop_file() {
     mkdir -p "$(dirname "$DESKTOP_FILE")"
-    if [ -f "$INSTALL_DIR/$BINARY_FILE" ]; then
+
+    if [ -f "$INSTALL_DIR/$BINARY_NAME" ]; then
         cat > "$DESKTOP_FILE" <<EOF
 [Desktop Entry]
 Name=$APP_NAME
-Exec=$INSTALL_DIR/$BINARY_FILE
+Exec=$INSTALL_DIR/$BINARY_NAME
 Icon=$INSTALL_DIR/$ICON_FILE
 Type=Application
 Categories=Game;
@@ -26,7 +28,11 @@ Terminal=false
 EOF
         chmod +x "$DESKTOP_FILE"
         cp "$DESKTOP_FILE" "$HOME/Desktop/" 2>/dev/null
-    else
+        echo "Desktop shortcut created for the binary: $BINARY_NAME"
+        return 0
+    fi
+
+    if [ -f "$INSTALL_DIR/$PYTHON_SCRIPT" ] && [ -x "$VENV_DIR/bin/python" ]; then
         cat > "$DESKTOP_FILE" <<EOF
 [Desktop Entry]
 Name=$APP_NAME
@@ -38,7 +44,12 @@ Terminal=false
 EOF
         chmod +x "$DESKTOP_FILE"
         cp "$DESKTOP_FILE" "$HOME/Desktop/" 2>/dev/null
+        echo "Desktop shortcut created for the Python script: $PYTHON_SCRIPT"
+        return 0
     fi
+
+    echo "Error: Neither the binary ($BINARY_FILE) nor Python script ($PYTHON_SCRIPT) was found in $INSTALL_DIR"
+    return 1
 }
 
 install_app() {
@@ -73,7 +84,7 @@ install_binary() {
     echo "Downloading binary executable..."
     echo $REPO_RAW/$BINARY_FILE
     curl -O "$REPO_RAW/$BINARY_FILE"
-    chmod +x "$BINARY_FILE"
+    chmod +x "$BINARY_NAME"
     echo "Downloading icon..."
     curl -O "$REPO_RAW/$ICON_FILE"
     echo "Downloading installer..."
@@ -149,7 +160,7 @@ case "$CHOICE" in
         ;;
     *)
         echo "Invalid selection. Please run the script again and select 1, 2, or 3."
-        exit 1
+
         ;;
 esac
 
