@@ -71,6 +71,7 @@ install_binary() {
     cd "$INSTALL_DIR" || exit
 
     echo "Downloading binary executable..."
+    echo $REPO_RAW/$BINARY_FILE
     curl -O "$REPO_RAW/$BINARY_FILE"
     chmod +x "$BINARY_FILE"
     echo "Downloading icon..."
