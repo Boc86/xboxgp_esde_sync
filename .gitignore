@@ -11,3 +11,7 @@ xboxgames_debug.log
 additional_data.json
 additional_data.timestamp
 settings.json
+build
+dist
+upx
+xboxgp_esde_sync.spec
