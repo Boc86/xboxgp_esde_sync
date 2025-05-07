@@ -11,7 +11,6 @@ import asyncio
 import aiohttp
 from aiofiles import open as aio_open
 from datetime import datetime
-import concurrent.futures
 import webbrowser
 import sys
 import subprocess
@@ -22,9 +21,15 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QFont, QIcon
 
+def get_app_dir():
+    """Returns the directory containing this script or the PyInstaller executable on Linux."""
+    if getattr(sys, 'frozen', False):
+        return os.path.dirname(os.path.abspath(sys.executable))
+    else:
+        return os.path.dirname(os.path.abspath(__file__))
+
 os.environ["QT_QPA_PLATFORM"] = "xcb"
 
-# Get the directory where this script is located
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 
 SETTINGS_FILE = os.path.join(APP_DIR, "settings.json")
