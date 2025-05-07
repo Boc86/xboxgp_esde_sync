@@ -31,7 +31,7 @@ chmod +x xbox_sync_installer.sh
 ```
 - Run the installer
 - The installer will put all files in /Home/%USER%/XboxSync/, including a copy of the installer which can be used to update and uninstall the script
-- A desktop shortcut will created along with a system menu shortcut that can be found under the Games category
+- A desktop shortcut will be created along with a system menu shortcut that can be found under the Games category
 
 ## Manual Installation (May cause conflicts with system python packages, only use if you know what you are doing)
 
