@@ -24,7 +24,7 @@
 
 ## Script Installation
 - Download the installer from the [Releases](https://github.com/Boc86/xboxgp_esde_sync/releases) section
-- Make the installer executable with (you may need to use sudo depending on your setup) 
+- Make the installer executable (you may need to use sudo depending on your setup) 
 ```bash
 chmod +x xbox_sync_installer.sh
 ```
@@ -57,6 +57,16 @@ pip install PyQt5 requests Pillow aiohttp aiofiles
     ```bash
     sudo apt install ffmpeg
     ```
+- **Download Source Code**
+- Download the source code from above
+- Make the python file executable (you may need to use sudo depending on your setup) 
+```bash
+chmod +x xboxgp_esde_sync.py
+```
+-- Open a terminal from the directory and run the script
+```bash
+python3 xboxgp_esde_sync.py
+```
 
 ---
 
