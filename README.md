@@ -24,14 +24,14 @@
 - Currently tested on Ubuntu 21.04 LTS/Debian and Nobara 41 & 42/Fedora but should run on any Linux flavour including Steam Deck
 
 ## Script Installation (Prefered method)
-- Method 1 will set up a virtual environment to run the python code in, this avoids any conflict with system python packages and allows you to tweak the code if necessary. Updating will remove any tweaks
-- Method 2 downloads a binary executable which is much smaller in size but doesn't allow for any code tweaks
 - Download the installer from the [Releases](https://github.com/Boc86/xboxgp_esde_sync/releases) section
 - Make the installer executable (you may need to use sudo depending on your setup) 
 ```bash
 chmod +x xbox_sync_installer.sh
 ```
 - Run the installer
+- Option 1 will set up a virtual environment to run the python code in, this avoids any conflict with system python packages and allows you to tweak the code if necessary. Updating will remove any tweaks
+- Option 2 downloads a binary executable which is much smaller in size but doesn't allow for any code tweaks
 - The installer will put all files in /Home/%USER%/XboxSync/, including a copy of the installer which can be used to update and uninstall the script
 - A desktop shortcut will be created along with a system menu shortcut that can be found under the Games category
 
