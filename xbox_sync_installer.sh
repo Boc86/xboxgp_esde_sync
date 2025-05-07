@@ -58,6 +58,8 @@ install_binary() {
 
     echo "Downloading binary executable..."
     curl -O "$REPO_RAW/$BINARY_FILE"
+    curl -O "$REPO_RAW/$ICON_FILE"
+    curl -o "$REPO_RAW/$INSTALLER_FILE"
 
     echo "Creating desktop shortcut..."
     create_desktop_file
@@ -73,6 +75,8 @@ update_app() {
     if [ -f "$INSTALL_DIR/$BINARY_FILE" ]; then
         echo "Updating binary executable..."
         curl -O "$REPO_RAW/$BINARY_FILE"
+        curl -O "$REPO_RAW/$ICON_FILE"
+        curl -o "$REPO_RAW/$INSTALLER_FILE"
     fi
         echo "Updating Python files..."
         curl -O "$REPO_RAW/$PYTHON_SCRIPT"
