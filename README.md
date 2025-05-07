@@ -22,7 +22,8 @@
 ---
 ## Instalation
 
-## Script Installation
+## Script Installation (Prefered method)
+- The script will set up a virtual environment to run the script in, this avoids any conflict with system python packages
 - Download the installer from the [Releases](https://github.com/Boc86/xboxgp_esde_sync/releases) section
 - Make the installer executable (you may need to use sudo depending on your setup) 
 ```bash
